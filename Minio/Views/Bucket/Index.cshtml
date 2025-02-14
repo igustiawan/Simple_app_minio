@@ -1,0 +1,22 @@
+﻿@{
+    ViewData["Title"] = "New Bucket";
+}
+
+
+<form asp-action="CreateBucket" method="post">
+    <div class="form-group mb-3">
+        <label for="bucketName">Bucket Name:</label>
+        <input type="text" class="form-control" id="bucketName" name="bucketName" required>
+    </div>
+    <button type="submit" class="btn btn-primary">Save</button>
+</form>
+
+@if (TempData["Message"] != null)
+{
+    <div class="alert alert-success mt-3">@TempData["Message"]</div>
+}
+
+@if (TempData["Error"] != null)
+{
+    <div class="alert alert-danger mt-3">@TempData["Error"]</div>
+}
