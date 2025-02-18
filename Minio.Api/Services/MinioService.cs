@@ -155,6 +155,36 @@ namespace Minio.Api.Services
             }
         }
 
+
+        public async Task<ReleaseableFileStreamModel> DownloadFileLargeAsync(string fileName)
+        {
+            try
+            {
+                var statArgs = new StatObjectArgs()
+                    .WithObject(fileName)
+                    .WithBucket(_bucketName);
+                var stat = await _minioClient.StatObjectAsync(statArgs);
+                var res = new ReleaseableFileStreamModel
+                {
+                    ContentType = stat.ContentType,
+                    FileName = fileName,
+                };
+                // the magic begins here
+                var getArgs = new GetObjectArgs()
+                    .WithObject(fileName)
+                    .WithBucket(_bucketName)
+                    .WithCallbackStream(res.SetStreamAsync);
+                await res.HandleAsync(_minioClient.GetObjectAsync(getArgs));
+                // the magic partially ends here
+                return res;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error downloading file: {ex.Message}");
+                throw;
+            }
+        }
+
         public async Task DeleteFileAsync(string fileName)
         {
             try

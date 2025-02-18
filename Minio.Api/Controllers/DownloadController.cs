@@ -14,19 +14,22 @@ public class DownloadController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> DownloadFile([FromQuery] string fileName)
+    public async Task DownloadFile([FromQuery] string fileName)
     {
         try
         {
-            var fileStream = await _minioService.DownloadFileAsync(fileName);
+            var res = await _minioService.DownloadFileLargeAsync(fileName);
+            Response.StatusCode = (int)System.Net.HttpStatusCode.OK;
+            Response.ContentType = res.ContentType;
+            await res.Stream.CopyToAsync(Response.Body);
 
-            // Set header untuk download
-            Response.Headers.Append("Content-Disposition", $"attachment; filename=\"{fileName}\"");
-            return File(fileStream, "application/octet-stream");
+            //var fileStream = await _minioService.DownloadFileAsync(fileName);
+            //Response.Headers.Append("Content-Disposition", $"attachment; filename=\"{fileName}\"");
+            //return File(fileStream, "application/octet-stream");
         }
         catch (Exception ex)
         {
-            return StatusCode(500, $"Error: {ex.Message}");
+           
         }
     }
 

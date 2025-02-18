@@ -80,36 +80,43 @@
 
             // ✅ Fungsi untuk memasang ulang event listener download & delete
             function reattachDownloadEvents() {
-                document.querySelectorAll('.download-btn').forEach(btn => {
-                    btn.addEventListener('click', async () => {
-                        const fileName = btn.dataset.filename;
+                    document.querySelectorAll(".download-btn").forEach(button => {
+                        button.addEventListener("click", async function () {
+                            const fileName = this.getAttribute("data-filename");
+                            if (!fileName) return;
 
-                        try {
-                            const response = await fetch(`/Upload/DownloadFile?fileName=${encodeURIComponent(fileName)}`, {
-                                method: 'GET'
-                            });
+                            this.disabled = true; // Disable tombol saat download
+                            this.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Downloading...';
 
-                            if (!response.ok) {
-                                throw new Error(`Gagal mengunduh file: ${response.statusText}`);
+                            try {
+                                const encodedFileName = encodeURIComponent(fileName);
+                                const url = `/Upload/DownloadFile?fileName=${encodedFileName}`;
+
+                                const response = await fetch(url);
+                                if (!response.ok) throw new Error("Gagal mengunduh file.");
+
+                                const blob = await response.blob();
+                                const objectUrl = URL.createObjectURL(blob);
+
+                                // Buat elemen <a> untuk download file
+                                const a = document.createElement("a");
+                                a.href = objectUrl;
+                                a.download = fileName;
+                                document.body.appendChild(a);
+                                a.click();
+
+                                URL.revokeObjectURL(objectUrl);
+                                document.body.removeChild(a);
+                            } catch (error) {
+                                console.error("Error:", error);
+                                alert("Terjadi kesalahan saat mengunduh file.");
+                            } finally {
+                                this.innerHTML = "Download"; 
+                                this.disabled = false; 
                             }
-
-                            const blob = await response.blob();
-                            const url = window.URL.createObjectURL(blob);
-
-                            const a = document.createElement('a');
-                            a.href = url;
-                            a.download = fileName;
-                            document.body.appendChild(a);
-                            a.click();
-
-                            window.URL.revokeObjectURL(url);
-                            document.body.removeChild(a);
-                        } catch (error) {
-                            console.error("Error:", error);
-                            alert("Terjadi kesalahan saat mengunduh file.");
-                        }
+                        });
                     });
-                });
+
 
                 document.querySelectorAll('.delete-btn').forEach(btn => {
                     btn.addEventListener('click', async () => {
