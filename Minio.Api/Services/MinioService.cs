@@ -201,8 +201,90 @@ namespace Minio.Api.Services
                 throw;
             }
         }
-    }
 
+        public async Task<List<string>> GetBucketListAsync()
+        {
+            var bucketList = new List<string>();
+
+            try
+            {
+                // Ambil daftar bucket dari MinIO
+                var listBucketsResponse = await _minioClient.ListBucketsAsync();
+                bucketList = listBucketsResponse.Buckets.Select(b => b.Name).ToList();
+
+                // Tampilkan daftar bucket di console (opsional)
+                foreach (var bucket in bucketList)
+                {
+                    Console.WriteLine($"Bucket: {bucket}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error retrieving bucket list: {ex.Message}");
+            }
+
+            return bucketList;
+        }
+
+        public async Task<bool> AddBucketAsync(string bucketName)
+        {
+            try
+            {
+                // Cek apakah bucket sudah ada
+                var bucketExistsArgs = new BucketExistsArgs().WithBucket(bucketName);
+                bool exists = await _minioClient.BucketExistsAsync(bucketExistsArgs);
+
+                if (!exists)
+                {
+                    // Jika belum ada, buat bucket baru
+                    var makeBucketArgs = new MakeBucketArgs().WithBucket(bucketName);
+                    await _minioClient.MakeBucketAsync(makeBucketArgs);
+                    Console.WriteLine($"Bucket '{bucketName}' berhasil dibuat.");
+                    return true;
+                }
+                else
+                {
+                    Console.WriteLine($"Bucket '{bucketName}' sudah ada.");
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error saat membuat bucket '{bucketName}': {ex.Message}");
+                return false;
+            }
+        }
+
+        public async Task<bool> DeleteBucketAsync(string bucketName)
+        {
+            try
+            {
+                // Cek apakah bucket ada sebelum dihapus
+                var bucketExistsArgs = new BucketExistsArgs().WithBucket(bucketName);
+                bool exists = await _minioClient.BucketExistsAsync(bucketExistsArgs);
+
+                if (exists)
+                {
+                    // Hapus bucket jika ada
+                    var removeBucketArgs = new RemoveBucketArgs().WithBucket(bucketName);
+                    await _minioClient.RemoveBucketAsync(removeBucketArgs);
+                    Console.WriteLine($"Bucket '{bucketName}' berhasil dihapus.");
+                    return true;
+                }
+                else
+                {
+                    Console.WriteLine($"Bucket '{bucketName}' tidak ditemukan.");
+                    return false;
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error saat menghapus bucket '{bucketName}': {ex.Message}");
+                return false;
+            }
+        }
+
+    }
 
     public class FileInfo
     {

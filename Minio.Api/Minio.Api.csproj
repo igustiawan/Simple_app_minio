@@ -7,6 +7,14 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Controllers\DeleteController.cs" />
+    <Compile Remove="Controllers\DownloadController.cs" />
+    <Compile Remove="Controllers\FileUploadController.cs" />
+    <Compile Remove="Controllers\GetListController.cs" />
+    <Compile Remove="Controllers\WeatherForecastController.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Minio" Version="6.0.4" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
   </ItemGroup>
