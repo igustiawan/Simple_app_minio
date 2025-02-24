@@ -1,0 +1,366 @@
+﻿@using Minio.Services
+@{
+    ViewData["Title"] = "MyFiles";
+    ViewData["Menu"] = "MyFiles";
+}
+
+<!-- Include Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
+<div class="wrapper">
+    <div class="content-wrapper">
+        <div class="container-fluid p-4">
+            <h2>File Manager</h2>
+            <!-- Sorting & View Options -->
+            <div class="d-flex justify-content-end mb-3">
+                <!-- Sorting Dropdown -->
+                <div class="dropdown me-2">
+                    <button class="btn btn-light dropdown-toggle" type="button" id="sortDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        Sort
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="sortDropdown">
+                        <li><a class="dropdown-item sort-option" data-sort="name">Name</a></li>
+                        <li><a class="dropdown-item sort-option" data-sort="date">Modified Date</a></li>
+                        <li><a class="dropdown-item sort-option" data-sort="size">File Size</a></li>
+                    </ul>
+                </div>
+                <!-- View Options Dropdown -->
+                <div class="dropdown">
+                    <button class="btn btn-light dropdown-toggle" type="button" id="viewDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        View
+                    </button>
+                    <ul class="dropdown-menu" aria-labelledby="viewDropdown">
+                        <li><a class="dropdown-item view-option" data-view="list">List</a></li>
+                        <li><a class="dropdown-item view-option" data-view="tiles">Tiles</a></li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- File Container -->
+            <div id="fileContainer" class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Modified Date</th>
+                            <th>Size</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>                       
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Styling for actions button */
+    .btn-link {
+        color: #007bff;
+        text-decoration: none;
+    }
+
+    /* Styling for dropdown menu */
+    .dropdown-menu {
+        min-width: 10rem;
+        z-index: 1000; /* Ensure dropdown appears above other elements */
+    }
+
+    /* Hover effect for dropdown items */
+    .dropdown-item:hover {
+        background-color: #f8f9fa;
+        color: #007bff;
+    }
+
+    /* Base styling for tiles */
+    .tiles-view {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+        gap: 16px;
+        overflow: hidden; /* Hilangkan scroll */
+    }
+
+    .tile-item {
+        position: relative;
+        border: 1px solid #ddd;
+        border-radius: 8px;
+        padding: 16px;
+        text-align: center;
+        background-color: #f9f9f9;
+        transition: transform 0.2s ease-in-out;
+        overflow: hidden; /* Hilangkan scroll */
+        height: 100%; /* Pastikan tinggi tetap sesuai */
+    }
+
+    .tile-icon {
+        font-size: 48px;
+        margin-bottom: 8px;
+        color: #007bff;
+        transition: transform 0.3s ease-in-out, color 0.3s ease-in-out;
+    }
+
+    .tile-name {
+        font-size: 14px;
+        font-weight: bold;
+        margin-bottom: 4px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .tile-info {
+        font-size: 12px;
+        color: #666;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* Hover effect */
+    .tile-item:hover {
+        transform: scale(1.05);
+    }
+
+        .tile-item:hover .tile-icon {
+            transform: scale(1.2); /* Perbesar ikon saat hover */
+            color: #ff6f61; /* Ubah warna ikon saat hover */
+        }
+</style>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // Simpan data file dari tabel awal
+        let fileData = [
+            { name: "Buku.xlsx", date: "February 17, 2023", size: "9.02 KB" },
+            { name: "Presentation.pptx", date: "November 7, 2023", size: "12.8 KB" },
+            { name: "Project.zip", date: "January 15, 2024", size: "45.5 MB" }
+        ];
+
+        // Function to get icon based on file extension
+        function getFileIcon(filename) {
+            const ext = filename.split('.').pop().toLowerCase();
+            switch (ext) {
+                case 'xlsx':
+                    return '<i class="fas fa-file-excel tile-icon"></i>'; // Excel icon
+                case 'docx':
+                case 'doc':
+                    return '<i class="fas fa-file-word tile-icon"></i>'; // Word icon
+                case 'pptx':
+                case 'ppt':
+                    return '<i class="fas fa-file-powerpoint tile-icon"></i>'; // PowerPoint icon
+                case 'zip':
+                    return '<i class="fas fa-file-archive tile-icon"></i>'; // Archive icon
+                case 'pdf':
+                    return '<i class="fas fa-file-pdf tile-icon"></i>'; // PDF icon
+                case 'jpg':
+                case 'jpeg':
+                case 'png':
+                    return '<i class="fas fa-file-image tile-icon"></i>'; // Image icon
+                default:
+                    return '<i class="fas fa-file-alt tile-icon"></i>'; // Default file icon
+            }
+        }
+
+        // Function to render List View
+        function renderListView() {
+            let container = document.getElementById("fileContainer");
+            if (!container) {
+                console.error("Element with ID 'fileContainer' not found!");
+                return;
+            }
+            container.innerHTML = ""; // Clear existing content
+
+            // Create table
+            let table = document.createElement("table");
+            table.classList.add("table", "table-striped");
+            table.id = "fileTable"; // Assign ID to the table for sorting functionality
+
+            // Add table header
+            let thead = document.createElement("thead");
+            thead.innerHTML = `
+            <tr>
+                <th>Name</th>
+                <th>Modified Date</th>
+                <th>Size</th>
+                <th>Actions</th> <!-- Add Actions column -->
+            </tr>
+        `;
+
+            // Add table body
+            let tbody = document.createElement("tbody");
+            fileData.forEach(file => {
+                let tr = document.createElement("tr");
+
+                // Add Name, Modified Date, and Size columns
+                tr.innerHTML = `
+                <td>${file.name}</td>
+                <td>${file.date}</td>
+                <td>${file.size}</td>
+                <td>
+                    <!-- Add Actions Button -->
+                    <button class="btn btn-link dropdown-toggle action-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-ellipsis-v"></i>
+                    </button>
+                    <!-- Dropdown Menu -->
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item action-detail" href="#">Details</a></li>
+                        <li><a class="dropdown-item action-share" href="#">Share</a></li>
+                        <li><a class="dropdown-item action-copy" href="#">Copy</a></li>
+                        <li><a class="dropdown-item action-move" href="#">Move</a></li>
+                        <li><a class="dropdown-item action-download" href="#">Download</a></li>
+                        <li><a class="dropdown-item action-rename" href="#">Rename</a></li>
+                        <li><a class="dropdown-item action-delete" href="#">Delete</a></li>
+                    </ul>
+                </td>
+            `;
+
+                tbody.appendChild(tr);
+            });
+
+            table.appendChild(thead);
+            table.appendChild(tbody);
+            container.appendChild(table);
+        }
+
+        // Handle dropdown actions
+        document.addEventListener("click", function (e) {
+            // Check if the clicked element is a dropdown item
+            if (e.target.classList.contains("dropdown-item")) {
+                e.preventDefault(); // Prevent default link behavior
+                const action = e.target.textContent.trim(); // Get the action name
+                const row = e.target.closest("tr"); // Get the closest table row
+                const fileName = row.cells[0].innerText.trim(); // Get the file name from the first column
+
+                // Perform action based on the selected option
+                switch (action) {
+                    case "Details":
+                        alert(`Viewing details for: ${fileName}`);
+                        break;
+                    case "Share":
+                        alert(`Sharing file: ${fileName}`);
+                        break;
+                    case "Copy":
+                        alert(`Copying file: ${fileName}`);
+                        break;
+                    case "Move":
+                        alert(`Moving file: ${fileName}`);
+                        break;
+                    case "Download":
+                        alert(`Downloading file: ${fileName}`);
+                        break;
+                    case "Rename":
+                        alert(`Renaming file: ${fileName}`);
+                        break;
+                    case "Delete":
+                        if (confirm(`Are you sure you want to delete "${fileName}"?`)) {
+                            alert(`Deleting file: ${fileName}`);
+                        }
+                        break;
+                    default:
+                        console.warn(`Unknown action: ${action}`);
+                }
+            }
+        });
+
+        // Function to render Tiles View
+        function renderTilesView() {
+            let container = document.getElementById("fileContainer");
+            if (!container) {
+                console.error("Element with ID 'fileContainer' not found!");
+                return;
+            }
+            container.innerHTML = ""; // Clear existing content
+
+            // Create tiles container
+            let tilesDiv = document.createElement("div");
+            tilesDiv.classList.add("tiles-view");
+
+            fileData.forEach(file => {
+                let tile = document.createElement("div");
+                tile.classList.add("tile-item");
+
+                // Add content to the tile
+                tile.innerHTML = `
+                        ${getFileIcon(file.name)}
+                        <div class="tile-name">${file.name}</div>
+                        <div class="tile-info">${file.date} | ${file.size}</div>
+                    `;
+                tilesDiv.appendChild(tile);
+            });
+
+            container.appendChild(tilesDiv);
+        }
+
+        // Sorting Function
+        document.querySelectorAll(".sort-option").forEach(item => {
+            item.addEventListener("click", function () {
+                let sortType = this.getAttribute("data-sort");
+                let table = document.getElementById("fileTable");
+                let tbody = table.querySelector("tbody");
+                let rows = Array.from(tbody.getElementsByTagName("tr"));
+
+                rows.sort((a, b) => {
+                    let colIndex = sortType === "name" ? 0 : (sortType === "date" ? 1 : 2);
+                    let aText = a.cells[colIndex].innerText.trim();
+                    let bText = b.cells[colIndex].innerText.trim();
+
+                    return aText.localeCompare(bText, undefined, { numeric: true, sensitivity: "base" });
+                });
+
+                // Gunakan DocumentFragment untuk mempertahankan CSS
+                let fragment = document.createDocumentFragment();
+                rows.forEach(row => fragment.appendChild(row));
+
+                tbody.innerHTML = ""; // Kosongkan tbody tanpa menghapus table styling
+                tbody.appendChild(fragment);
+            });
+        });
+
+        // Switch View Function
+        document.querySelectorAll(".view-option").forEach(item => {
+            item.addEventListener("click", function () {
+                let viewType = this.getAttribute("data-view");
+
+                // Remove active class from all options
+                document.querySelectorAll(".view-option").forEach(option => option.classList.remove("active"));
+
+                // Add active class to the selected option
+                this.classList.add("active");
+
+                // Render the selected view
+                if (viewType === "tiles") {
+                    renderTilesView();
+                } else {
+                    renderListView();
+                }
+            });
+        });
+
+        // Initialize with List View
+        renderListView();
+
+        // Add event listeners to actions buttons
+        document.querySelectorAll('.dropdown-toggle').forEach(function (button) {
+            button.addEventListener('click', function (e) {
+                // Prevent default behavior (e.g., link click)
+                e.preventDefault();
+                // Toggle dropdown menu
+                this.classList.toggle('show');
+            });
+        });
+
+        // Add event listeners to dropdown items
+        document.querySelectorAll('.dropdown-item').forEach(function (item) {
+            item.addEventListener('click', function (e) {
+                // Prevent default behavior
+                e.preventDefault();
+                // Handle action based on item text
+                const action = this.textContent;
+                alert(`Performing action: ${action}`);
+            });
+        });
+
+    });
+</script>

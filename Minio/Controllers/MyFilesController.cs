@@ -2,7 +2,7 @@
 
 namespace Minio.Controllers
 {
-    public class BucketController : Controller
+    public class MyFilesController : Controller
     {
         public IActionResult Index()
         {
