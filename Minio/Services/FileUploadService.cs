@@ -28,7 +28,7 @@ namespace Minio.Services
             var streamContent = new StreamContent(fileStream);
             content.Add(streamContent, "file", fileName);
 
-            var response = await _httpClient.PostAsync($"{_apiBaseUrl}/api/fileupload", content);
+            var response = await _httpClient.PostAsync($"{_apiBaseUrl}/api/Upload/upload", content);
 
             await _hubContext.Clients.All.SendAsync("ReceiveUploadProgress", fileName, 100);
 
@@ -42,7 +42,7 @@ namespace Minio.Services
             try
             {
                 // Panggil API GetListController
-                var response = await _httpClient.GetAsync($"{_apiBaseUrl}/api/getlist");
+                var response = await _httpClient.GetAsync($"{_apiBaseUrl}/api/upload/list");
 
                 response.EnsureSuccessStatusCode(); // Pastikan response sukses
 
@@ -67,7 +67,7 @@ namespace Minio.Services
         {
             try
             {
-                var response = await _httpClient.GetAsync($"{_apiBaseUrl}/api/Download?fileName={fileName}");
+                var response = await _httpClient.GetAsync($"{_apiBaseUrl}/api/Upload/Download?fileName={fileName}");
 
                 response.EnsureSuccessStatusCode(); // Pastikan response sukses
 
@@ -84,7 +84,7 @@ namespace Minio.Services
         {
             try
             {
-                var response = await _httpClient.DeleteAsync($"{_apiBaseUrl}/api/Delete?fileName={fileName}");
+                var response = await _httpClient.DeleteAsync($"{_apiBaseUrl}/api/Upload/Delete?fileName={fileName}");
 
                 response.EnsureSuccessStatusCode();
                 Console.WriteLine($"File {fileName} berhasil dihapus.");

@@ -1,57 +1,83 @@
-﻿<div class="sidebar-wrapper">
+﻿@{
+    var currentPath = Context.Request.Path.ToString(); // Mendapatkan path URL saat ini
+}
+
+<div class="sidebar-wrapper">
     <nav class="mt-2">
         <!--begin::Sidebar Menu-->
-        <ul class="nav sidebar-menu flex-column"
-            data-lte-toggle="treeview"
-            role="menu"
-            data-accordion="false">
-            <li class="nav-item">
-                <a href="./Home" class="nav-link active">
-                    <i class="nav-icon bi bi-palette"></i>
+        <ul class="nav sidebar-menu flex-column" data-lte-toggle="treeview" role="menu" data-accordion="false">
+            <!-- Home -->
+            <li class="nav-item @Html.IsActive("/Home")">
+                <a href="/Home" class="nav-link @Html.IsActive("/Home")">
+                    <i class="nav-icon bi bi-house-door"></i>
                     <p>Home</p>
                 </a>
             </li>
-            <li class="nav-item">
-                <a href="./MyFiles" class="nav-link">
-                    <i class="nav-icon bi bi-palette"></i>
+
+            <!-- My Files -->
+            <li class="nav-item @Html.IsActive("/MyFiles")">
+                <a href="/MyFiles" class="nav-link @Html.IsActive("/MyFiles")">
+                    <i class="nav-icon bi bi-folder"></i>
                     <p>My Files</p>
                 </a>
             </li>
-            <li class="nav-item">
-                <a href="./Shared" class="nav-link">
-                    <i class="nav-icon bi bi-palette"></i>
+
+            <!-- Shared -->
+            <li class="nav-item @Html.IsActive("/FileShared")">
+                <a href="/FileShared" class="nav-link @Html.IsActive("/FileShared")">
+                    <i class="nav-icon bi bi-people"></i>
                     <p>Shared</p>
                 </a>
             </li>
-            <li class="nav-item">
-                <a href="#" class="nav-link">
-                    <i class="nav-icon bi bi-circle-fill"></i>
+
+            <!-- Favorites -->
+            <li class="nav-item @Html.IsActive("/Favorites")">
+                <a href="/Favorites" class="nav-link @Html.IsActive("/Favorites")">
+                    <i class="nav-icon bi bi-star"></i>
+                    <p>Favorites</p>
+                </a>
+            </li>
+
+            <!-- Recycle Bin -->
+            <li class="nav-item @Html.IsActive("/RecycleBin")">
+                <a href="/RecycleBin" class="nav-link @Html.IsActive("/RecycleBin")">
+                    <i class="nav-icon bi bi-trash"></i>
+                    <p>Recycle Bin</p>
+                </a>
+            </li>
+
+            <!-- Master -->
+            <li class="nav-item @Html.IsMenuOpen("/Bucket")" id="master-menu">
+                <a href="#" class="nav-link @Html.IsActive("/Bucket")">
+                    <i class="nav-icon bi bi-gear"></i>
                     <p>
                         Master
                         <i class="nav-arrow bi bi-chevron-right"></i>
                     </p>
                 </a>
                 <ul class="nav nav-treeview">
-                    <li class="nav-item">
-                        <a href="./Bucket" class="nav-link">
-                            <i class="nav-icon bi bi-circle"></i>
+                    <li class="nav-item @Html.IsActive("/Bucket")">
+                        <a href="/Bucket" class="nav-link @Html.IsActive("/Bucket")">
+                            <i class="nav-icon bi bi-database"></i>
                             <p>Bucket</p>
                         </a>
                     </li>
                 </ul>
             </li>
-            <li class="nav-item">
-                <a href="#" class="nav-link">
-                    <i class="nav-icon bi bi-circle-fill"></i>
+
+            <!-- Transaksi -->
+            <li class="nav-item @Html.IsMenuOpen("/Upload")" id="transaksi-menu">
+                <a href="#" class="nav-link @Html.IsActive("/Upload")">
+                    <i class="nav-icon bi bi-cash"></i>
                     <p>
                         Transaksi
                         <i class="nav-arrow bi bi-chevron-right"></i>
                     </p>
                 </a>
                 <ul class="nav nav-treeview">
-                    <li class="nav-item">
-                        <a href="./Upload" class="nav-link">
-                            <i class="nav-icon bi bi-circle"></i>
+                    <li class="nav-item @Html.IsActive("/Upload")">
+                        <a href="/Upload" class="nav-link @Html.IsActive("/Upload")">
+                            <i class="nav-icon bi bi-upload"></i>
                             <p>List Upload</p>
                         </a>
                     </li>
@@ -61,3 +87,31 @@
         <!--end::Sidebar Menu-->
     </nav>
 </div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const currentPath = window.location.pathname;
+
+        // Daftar menu induk dan submenu yang perlu diperiksa
+        const menus = [
+            { id: "master-menu", submenuPath: "/Bucket" },
+            { id: "transaksi-menu", submenuPath: "/Upload" }
+        ];
+
+        menus.forEach(menu => {
+            if (currentPath === menu.submenuPath) {
+                const menuElement = document.getElementById(menu.id);
+                if (menuElement) {
+                    menuElement.classList.add("menu-open");
+                    menuElement.querySelector(".nav-treeview").style.display = "block";
+                }
+            }
+        });
+    });
+</script>
+
+<style>
+    .menu-open > .nav-treeview {
+        display: block !important;
+    }
+</style>

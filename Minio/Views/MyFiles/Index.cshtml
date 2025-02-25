@@ -12,7 +12,10 @@
         <div class="container-fluid p-4">
             <h2>File Manager</h2>
             <!-- Sorting & View Options -->
+
+
             <div class="d-flex justify-content-end mb-3">
+
                 <!-- Sorting Dropdown -->
                 <div class="dropdown me-2">
                     <button class="btn btn-light dropdown-toggle" type="button" id="sortDropdown" data-bs-toggle="dropdown" aria-expanded="false">
@@ -36,6 +39,56 @@
                 </div>
             </div>
 
+
+
+            <button id="uploadBtn" class="btn btn-primary">Upload</button>
+            <!-- Modal Upload -->
+            <div id="uploadModal" class="modal">
+                <div class="modal-content">
+                    <span class="close">&times;</span>
+                    <h2>Upload File</h2>
+                    <div class="drop-zone">Drag and drop file here or <a href="#">browse</a></div>
+                    <h3>Uploaded Files</h3>
+                    <ul id="fileList">
+                        <!-- Daftar file akan muncul di sini -->
+                    </ul>
+                    <button id="cancelUpload">Cancel</button>
+                    <button id="addFiles" class="btn-primary">Add Files</button>
+                </div>
+            </div>
+
+            <div id="toolbar" class="toolbar" style="display: none;">
+                <button id="deleteBtn">
+                    <i class="fas fa-trash-alt"></i>
+                    Delete
+                </button>
+                <button id="favoriteBtn">
+                    <i class="fas fa-star"></i>
+                    Favorite
+                </button>
+                <button id="downloadBtn">
+                    <i class="fas fa-download"></i>
+                    Download
+                </button>
+                <button id="moveToBtn">
+                    <i class="fas fa-folder"></i>
+                    Move to
+                </button>
+                <button id="copyToBtn">
+                    <i class="fas fa-copy"></i>
+                    Copy to
+                </button>
+                <select id="sortSelect">
+                    <!-- Pilihan sort -->
+                </select>
+                <select id="viewSelect">
+                    <!-- Pilihan view -->
+                </select>
+                <span id="selectedCount">0 selected</span>
+            </div>
+
+            </br>
+
             <!-- File Container -->
             <div id="fileContainer" class="table-responsive">
                 <table class="table table-striped">
@@ -54,7 +107,39 @@
         </div>
     </div>
 </div>
+<style>
+    .modal {
+        display: none;
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: white;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    }
 
+    .modal-content {
+        position: relative;
+    }
+
+    .close {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        cursor: pointer;
+        font-size: 20px;
+    }
+
+    .drop-zone {
+        border: 2px dashed #ccc;
+        padding: 20px;
+        text-align: center;
+        cursor: pointer;
+        margin-bottom: 20px;
+    }
+</style>
 <style>
     /* Styling for actions button */
     .btn-link {
@@ -78,7 +163,7 @@
     .tiles-view {
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-        gap: 16px;
+        gap: 36px;
         overflow: hidden; /* Hilangkan scroll */
     }
 
@@ -86,7 +171,7 @@
         position: relative;
         border: 1px solid #ddd;
         border-radius: 8px;
-        padding: 16px;
+        padding: 36px;
         text-align: center;
         background-color: #f9f9f9;
         transition: transform 0.2s ease-in-out;
@@ -120,247 +205,284 @@
 
     /* Hover effect */
     .tile-item:hover {
-        transform: scale(1.05);
+        transform: scale(1);
     }
 
         .tile-item:hover .tile-icon {
             transform: scale(1.2); /* Perbesar ikon saat hover */
             color: #ff6f61; /* Ubah warna ikon saat hover */
         }
+
+
+    input[type="checkbox"] {
+        position: absolute;
+        opacity: 0;
+    }
+
+    label {
+        position: relative;
+        padding-left: 25px; /* Adjust based on checkbox size */
+        cursor: pointer;
+    }
+
+        label::before {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 25px;
+            height: 25px;
+            border: 1px solid #ccc;
+            border-radius: 3px;
+        }
+
+    input[type="checkbox"]:checked + label::before {
+        background-color: #007bff;
+        border-color: #007bff;
+    }
+
+    input[type="checkbox"]:checked + label::after {
+        content: '';
+        position: absolute;
+        left: 6px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 5px;
+        height: 10px;
+        border-style: solid;
+        border-color: white;
+        border-image: initial;
+        border-width: 0 2px 2px 0;
+        transform-origin: center center;
+        rotate: 45deg;
+    }
+
+    .toolbar {
+          display: flex;
+          background-color: #ffffff;
+          border-radius: 5px;
+          box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+          padding: 5px 10px;
+        }
+
+        .toolbar button,
+        .toolbar select,
+        .toolbar span {
+          display: flex;
+          align-items: center;
+          border: none;
+          background: none;
+          color: #666666;
+          padding: 5px 10px;
+          cursor: pointer;
+          transition: color 0.3s ease;
+        }
+
+        .toolbar button:hover {
+          color: #333333;
+        }
+
+        .toolbar button i {
+          margin-right: 5px;
+        }
+
+        .toolbar select {
+          appearance: none;
+          -webkit-appearance: none;
+          background: url('dropdown-icon.svg') right center / contain no-repeat;
+          padding: 5px 20px 5px 10px;
+        }
+
+
 </style>
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-        // Simpan data file dari tabel awal
         let fileData = [
-            { name: "Buku.xlsx", date: "February 17, 2023", size: "9.02 KB" },
-            { name: "Presentation.pptx", date: "November 7, 2023", size: "12.8 KB" },
-            { name: "Project.zip", date: "January 15, 2024", size: "45.5 MB" }
+            { name: "Buku.xlsx", date: "2024-01-01", size: "9.02 KB" },
+            { name: "Presentation.pptx", date: "2025-01-01", size: "12.8 KB" },
+            { name: "Project.zip", date: "2025-01-01", size: "45.5 MB" },
+            { name: "Project1.docx", date: "2025-01-11", size: "45.5 MB" },
+            { name: "Project2.zip", date: "2025-01-07", size: "41.5 MB" },
+            { name: "Project3.zip", date: "2025-01-04", size: "46.5 MB" },
+            { name: "Project4.zip", date: "2024-02-01", size: "43.5 MB" }
         ];
 
-        // Function to get icon based on file extension
-        function getFileIcon(filename) {
-            const ext = filename.split('.').pop().toLowerCase();
-            switch (ext) {
-                case 'xlsx':
-                    return '<i class="fas fa-file-excel tile-icon"></i>'; // Excel icon
-                case 'docx':
-                case 'doc':
-                    return '<i class="fas fa-file-word tile-icon"></i>'; // Word icon
-                case 'pptx':
-                case 'ppt':
-                    return '<i class="fas fa-file-powerpoint tile-icon"></i>'; // PowerPoint icon
-                case 'zip':
-                    return '<i class="fas fa-file-archive tile-icon"></i>'; // Archive icon
-                case 'pdf':
-                    return '<i class="fas fa-file-pdf tile-icon"></i>'; // PDF icon
-                case 'jpg':
-                case 'jpeg':
-                case 'png':
-                    return '<i class="fas fa-file-image tile-icon"></i>'; // Image icon
-                default:
-                    return '<i class="fas fa-file-alt tile-icon"></i>'; // Default file icon
-            }
-        }
-
-        // Function to render List View
         function renderListView() {
             let container = document.getElementById("fileContainer");
-            if (!container) {
-                console.error("Element with ID 'fileContainer' not found!");
-                return;
-            }
-            container.innerHTML = ""; // Clear existing content
-
-            // Create table
-            let table = document.createElement("table");
-            table.classList.add("table", "table-striped");
-            table.id = "fileTable"; // Assign ID to the table for sorting functionality
-
-            // Add table header
-            let thead = document.createElement("thead");
-            thead.innerHTML = `
-            <tr>
-                <th>Name</th>
-                <th>Modified Date</th>
-                <th>Size</th>
-                <th>Actions</th> <!-- Add Actions column -->
-            </tr>
-        `;
-
-            // Add table body
-            let tbody = document.createElement("tbody");
-            fileData.forEach(file => {
-                let tr = document.createElement("tr");
-
-                // Add Name, Modified Date, and Size columns
-                tr.innerHTML = `
-                <td>${file.name}</td>
-                <td>${file.date}</td>
-                <td>${file.size}</td>
-                <td>
-                    <!-- Add Actions Button -->
-                    <button class="btn btn-link dropdown-toggle action-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="fas fa-ellipsis-v"></i>
-                    </button>
-                    <!-- Dropdown Menu -->
-                    <ul class="dropdown-menu">
-                        <li><a class="dropdown-item action-detail" href="#">Details</a></li>
-                        <li><a class="dropdown-item action-share" href="#">Share</a></li>
-                        <li><a class="dropdown-item action-copy" href="#">Copy</a></li>
-                        <li><a class="dropdown-item action-move" href="#">Move</a></li>
-                        <li><a class="dropdown-item action-download" href="#">Download</a></li>
-                        <li><a class="dropdown-item action-rename" href="#">Rename</a></li>
-                        <li><a class="dropdown-item action-delete" href="#">Delete</a></li>
-                    </ul>
-                </td>
+            container.innerHTML = `
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Modified Date</th>
+                            <th>Size</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        ${fileData.map(file => `
+                            <tr>
+                                <td>${file.name}</td>
+                                <td>${file.date}</td>
+                                <td>${file.size}</td>
+                                <td>
+                                    <button class="btn btn-link dropdown-toggle action-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                        <i class="fas fa-ellipsis-v"></i>
+                                    </button>
+                                    <ul class="dropdown-menu">
+                                        <li><a class="dropdown-item action-detail" href="#">Details</a></li>
+                                        <li><a class="dropdown-item action-share" href="#">Share</a></li>
+                                        <li><a class="dropdown-item action-copy" href="#">Copy</a></li>
+                                        <li><a class="dropdown-item action-move" href="#">Move</a></li>
+                                        <li><a class="dropdown-item action-download" href="#">Download</a></li>
+                                        <li><a class="dropdown-item action-rename" href="#">Rename</a></li>
+                                        <li><a class="dropdown-item action-delete" href="#">Delete</a></li>
+                                    </ul>
+                                </td>
+                            </tr>
+                        `).join('')}
+                    </tbody>
+                </table>
             `;
-
-                tbody.appendChild(tr);
-            });
-
-            table.appendChild(thead);
-            table.appendChild(tbody);
-            container.appendChild(table);
         }
 
-        // Handle dropdown actions
-        document.addEventListener("click", function (e) {
-            // Check if the clicked element is a dropdown item
-            if (e.target.classList.contains("dropdown-item")) {
-                e.preventDefault(); // Prevent default link behavior
-                const action = e.target.textContent.trim(); // Get the action name
-                const row = e.target.closest("tr"); // Get the closest table row
-                const fileName = row.cells[0].innerText.trim(); // Get the file name from the first column
-
-                // Perform action based on the selected option
-                switch (action) {
-                    case "Details":
-                        alert(`Viewing details for: ${fileName}`);
-                        break;
-                    case "Share":
-                        alert(`Sharing file: ${fileName}`);
-                        break;
-                    case "Copy":
-                        alert(`Copying file: ${fileName}`);
-                        break;
-                    case "Move":
-                        alert(`Moving file: ${fileName}`);
-                        break;
-                    case "Download":
-                        alert(`Downloading file: ${fileName}`);
-                        break;
-                    case "Rename":
-                        alert(`Renaming file: ${fileName}`);
-                        break;
-                    case "Delete":
-                        if (confirm(`Are you sure you want to delete "${fileName}"?`)) {
-                            alert(`Deleting file: ${fileName}`);
-                        }
-                        break;
-                    default:
-                        console.warn(`Unknown action: ${action}`);
-                }
-            }
-        });
-
-        // Function to render Tiles View
         function renderTilesView() {
             let container = document.getElementById("fileContainer");
-            if (!container) {
-                console.error("Element with ID 'fileContainer' not found!");
-                return;
-            }
-            container.innerHTML = ""; // Clear existing content
+            container.innerHTML = `
+        <div class="tiles-view">
+            ${fileData.map(file => `
+                <div class="tile-item">
+                    ${getFileIcon(file.name)}
+                    <div class="tile-name">${file.name}</div>
+                    <div class="tile-info">${file.date} - ${file.size}</div>
+                    <input type="checkbox" id="${sanitizeId(file.name)}" class="file-checkbox" name="${file.name}">
+                    <label for="${sanitizeId(file.name)}"></label>
+                </div>
+            `).join('')}
+        </div>
+        `;
 
-            // Create tiles container
-            let tilesDiv = document.createElement("div");
-            tilesDiv.classList.add("tiles-view");
-
-            fileData.forEach(file => {
-                let tile = document.createElement("div");
-                tile.classList.add("tile-item");
-
-                // Add content to the tile
-                tile.innerHTML = `
-                        ${getFileIcon(file.name)}
-                        <div class="tile-name">${file.name}</div>
-                        <div class="tile-info">${file.date} | ${file.size}</div>
-                    `;
-                tilesDiv.appendChild(tile);
+            document.querySelectorAll('.file-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', handleCheckboxChange);
             });
-
-            container.appendChild(tilesDiv);
         }
 
-        // Sorting Function
+   
+
+        document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+            checkbox.classList.add('file-checkbox'); // Tambahkan class
+        });
+
+        document.getElementById('deleteBtn').addEventListener('click', () => {
+            const selectedFiles = [];
+            document.querySelectorAll('input[type="checkbox"]:checked').forEach(checkbox => {
+                const fileId = checkbox.id;
+                selectedFiles.push(fileId);
+                // Lakukan tindakan delete pada fileId
+            });
+            // Lakukan tindakan delete pada array selectedFiles
+        });
+
+        function sanitizeId(id) {
+            return id.replace(/[^a-zA-Z0-9]/g, '_');
+        }
+
+        const toolbar = document.getElementById('toolbar');
+        const checkboxes = document.querySelectorAll('.file-checkbox');
+        const fileContainer = document.getElementById('fileContainer');
+        const selectedCountElement = document.getElementById('selectedCount');
+        // Tambahkan tombol X untuk reset checklist
+        const clearSelectionButton = document.createElement('button');
+
+        clearSelectionButton.textContent = '❌';
+        clearSelectionButton.style.marginLeft = '10px';
+        clearSelectionButton.style.display = 'none'; // Sembunyikan saat awal
+        clearSelectionButton.addEventListener('click', function () {
+            document.querySelectorAll('.file-checkbox:checked').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            updateToolbar();
+        });
+        toolbar.appendChild(clearSelectionButton);
+
+        function updateToolbar() {
+            const selectedCount = document.querySelectorAll('.file-checkbox:checked').length;
+
+            // Update teks jumlah yang dipilih
+            selectedCountElement.textContent = `${selectedCount} selected`;
+
+            // Tampilkan toolbar jika ada yang dipilih, sembunyikan jika tidak ada
+            toolbar.style.display = selectedCount > 0 ? 'flex' : 'none';
+
+            // Tampilkan tombol X jika lebih dari 1 yang dipilih
+            clearSelectionButton.style.display = selectedCount > 1 ? 'inline-block' : 'none';
+        }
+
+        fileContainer.addEventListener('change', handleCheckboxChange);
+
+        fileContainer.addEventListener('change', function (event) {
+            if (event.target.classList.contains('file-checkbox')) {
+                updateToolbar();
+            }
+        });
+
+        window.addEventListener('load', () => {
+            const checkedCount = Array.from(checkboxes).filter(checkbox => checkbox.checked).length;
+            if (checkedCount > 0) {
+                toolbar.style.display = 'flex';
+            } else {
+                toolbar.style.display = 'none';
+            }
+        });
+
+        function handleCheckboxChange(event) {
+            const checkedCount = document.querySelectorAll('.file-checkbox:checked').length;
+            if (checkedCount > 0) {
+                toolbar.style.display = 'flex'; // Tampilkan toolbar saat ada yang dipilih
+            } else {
+                toolbar.style.display = 'none'; // Sembunyikan saat tidak ada yang dipilih
+            }
+        }
+
+        function getFileIcon(filename) {
+            const ext = filename.split('.').pop().toLowerCase();
+            const icons = {
+                'xlsx': 'fa-file-excel',
+                'docx': 'fa-file-word',
+                'pptx': 'fa-file-powerpoint',
+                'zip': 'fa-file-archive',
+                'pdf': 'fa-file-pdf',
+                'jpg': 'fa-file-image',
+                'jpeg': 'fa-file-image',
+                'png': 'fa-file-image'
+            };
+            return `<i class="fas ${icons[ext] || 'fa-file-alt'} tile-icon"></i>`;
+        }
+
         document.querySelectorAll(".sort-option").forEach(item => {
             item.addEventListener("click", function () {
-                let sortType = this.getAttribute("data-sort");
-                let table = document.getElementById("fileTable");
-                let tbody = table.querySelector("tbody");
-                let rows = Array.from(tbody.getElementsByTagName("tr"));
-
-                rows.sort((a, b) => {
-                    let colIndex = sortType === "name" ? 0 : (sortType === "date" ? 1 : 2);
-                    let aText = a.cells[colIndex].innerText.trim();
-                    let bText = b.cells[colIndex].innerText.trim();
-
-                    return aText.localeCompare(bText, undefined, { numeric: true, sensitivity: "base" });
-                });
-
-                // Gunakan DocumentFragment untuk mempertahankan CSS
-                let fragment = document.createDocumentFragment();
-                rows.forEach(row => fragment.appendChild(row));
-
-                tbody.innerHTML = ""; // Kosongkan tbody tanpa menghapus table styling
-                tbody.appendChild(fragment);
+                const sortBy = this.getAttribute("data-sort");
+                if (sortBy === "name") fileData.sort((a, b) => a.name.localeCompare(b.name));
+                else if (sortBy === "date") fileData.sort((a, b) => new Date(a.date) - new Date(b.date));
+                else if (sortBy === "size") fileData.sort((a, b) => parseFloat(a.size) - parseFloat(b.size));
+                renderListView();
+                toolbar.style.display = 'none';
             });
         });
 
-        // Switch View Function
         document.querySelectorAll(".view-option").forEach(item => {
             item.addEventListener("click", function () {
-                let viewType = this.getAttribute("data-view");
+                const viewType = this.getAttribute("data-view");
+                if (viewType === "list") renderListView();
+                else renderTilesView();
 
-                // Remove active class from all options
-                document.querySelectorAll(".view-option").forEach(option => option.classList.remove("active"));
-
-                // Add active class to the selected option
-                this.classList.add("active");
-
-                // Render the selected view
-                if (viewType === "tiles") {
-                    renderTilesView();
-                } else {
-                    renderListView();
-                }
+                toolbar.style.display = 'none';
             });
         });
 
-        // Initialize with List View
         renderListView();
-
-        // Add event listeners to actions buttons
-        document.querySelectorAll('.dropdown-toggle').forEach(function (button) {
-            button.addEventListener('click', function (e) {
-                // Prevent default behavior (e.g., link click)
-                e.preventDefault();
-                // Toggle dropdown menu
-                this.classList.toggle('show');
-            });
-        });
-
-        // Add event listeners to dropdown items
-        document.querySelectorAll('.dropdown-item').forEach(function (item) {
-            item.addEventListener('click', function (e) {
-                // Prevent default behavior
-                e.preventDefault();
-                // Handle action based on item text
-                const action = this.textContent;
-                alert(`Performing action: ${action}`);
-            });
-        });
-
     });
+
 </script>
