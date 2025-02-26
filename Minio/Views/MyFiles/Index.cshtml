@@ -14,48 +14,71 @@
             <!-- Sorting & View Options -->
 
 
-            <div class="d-flex justify-content-end mb-3">
+            <div class="d-flex justify-content-between mb-3">
+                <!-- Upload Button -->
+                <button id="uploadBtn" class="btn btn-primary" data-bs-toggle="modal" data-bs-backdrop="static" data-bs-target="#uploadModal">Upload</button>
 
-                <!-- Sorting Dropdown -->
-                <div class="dropdown me-2">
-                    <button class="btn btn-light dropdown-toggle" type="button" id="sortDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                        Sort
-                    </button>
-                    <ul class="dropdown-menu" aria-labelledby="sortDropdown">
-                        <li><a class="dropdown-item sort-option" data-sort="name">Name</a></li>
-                        <li><a class="dropdown-item sort-option" data-sort="date">Modified Date</a></li>
-                        <li><a class="dropdown-item sort-option" data-sort="size">File Size</a></li>
-                    </ul>
-                </div>
-                <!-- View Options Dropdown -->
-                <div class="dropdown">
-                    <button class="btn btn-light dropdown-toggle" type="button" id="viewDropdown" data-bs-toggle="dropdown" aria-expanded="false">
-                        View
-                    </button>
-                    <ul class="dropdown-menu" aria-labelledby="viewDropdown">
-                        <li><a class="dropdown-item view-option" data-view="list">List</a></li>
-                        <li><a class="dropdown-item view-option" data-view="tiles">Tiles</a></li>
-                    </ul>
+                <div class="d-flex">
+                    <!-- Sorting Dropdown -->
+                    <div class="dropdown me-2">
+                        <button class="btn btn-light dropdown-toggle" type="button" id="sortDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            Sort
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="sortDropdown">
+                            <li><a class="dropdown-item sort-option" data-sort="name">Name</a></li>
+                            <li><a class="dropdown-item sort-option" data-sort="date">Modified Date</a></li>
+                            <li><a class="dropdown-item sort-option" data-sort="size">File Size</a></li>
+                        </ul>
+                    </div>
+                    <!-- View Options Dropdown -->
+                    <div class="dropdown">
+                        <button class="btn btn-light dropdown-toggle" type="button" id="viewDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            View
+                        </button>
+                        <ul class="dropdown-menu" aria-labelledby="viewDropdown">
+                            <li><a class="dropdown-item view-option" data-view="list">List</a></li>
+                            <li><a class="dropdown-item view-option" data-view="tiles">Tiles</a></li>
+                        </ul>
+                    </div>
                 </div>
             </div>
 
 
-
-            <button id="uploadBtn" class="btn btn-primary">Upload</button>
             <!-- Modal Upload -->
-            <div id="uploadModal" class="modal">
-                <div class="modal-content">
-                    <span class="close">&times;</span>
-                    <h2>Upload File</h2>
-                    <div class="drop-zone">Drag and drop file here or <a href="#">browse</a></div>
-                    <h3>Uploaded Files</h3>
-                    <ul id="fileList">
-                        <!-- Daftar file akan muncul di sini -->
-                    </ul>
-                    <button id="cancelUpload">Cancel</button>
-                    <button id="addFiles" class="btn-primary">Add Files</button>
+            <div id="uploadModal" class="modal fade" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content p-4 shadow-lg rounded-3">
+                        <!-- Modal Header -->
+                        <div class="d-flex justify-content-between align-items-center border-bottom pb-2">
+                            <h4 class="modal-title fw-bold">Upload File</h4>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+
+                        <!-- Drag and Drop Zone -->
+                        <div id="dropZone" class="drop-zone mt-3 p-4 text-center border border-dashed rounded bg-light">
+                            <p class="mb-2 text-muted">
+                                Drag and drop file here or
+                                <a href="#" id="browseFiles" class="text-primary fw-semibold">browse</a>
+                            </p>
+                            <input type="file" id="fileInput" multiple hidden>
+                        </div>
+
+                        <!-- Uploaded Files List -->
+                        <h5 class="mt-4 fw-semibold">Uploaded Files</h5>
+                        <ul id="fileList" class="list-group list-group-flush mt-2">
+                            <!-- File items akan ditambahkan secara dinamis -->
+                        </ul>
+
+                        <!-- Modal Footer -->
+                        <div class="d-flex justify-content-end mt-3 border-top pt-3">
+                            <button class="btn btn-link text-secondary" data-bs-dismiss="modal">Cancel</button>
+                            <button class="btn btn-primary ms-2">Add Files</button>
+                        </div>
+                    </div>
                 </div>
             </div>
+
+
 
             <div id="toolbar" class="toolbar" style="display: none;">
                 <button id="deleteBtn">
@@ -90,55 +113,107 @@
             </br>
 
             <!-- File Container -->
-            <div id="fileContainer" class="table-responsive">
-                <table class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Modified Date</th>
-                            <th>Size</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>                       
-                    </tbody>
-                </table>
-            </div>
+            <div id="fileContainer"></div>
         </div>
     </div>
 </div>
+<!-- Custom Styles -->
 <style>
-    .modal {
-        display: none;
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        background: white;
-        padding: 20px;
-        border-radius: 8px;
-        box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    .modal-backdrop {
+        background-color: rgba(0, 0, 0, 0.2) !important;
     }
 
     .modal-content {
-        position: relative;
+        background: #fff;
+        border-radius: 12px;
+        box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.2);
+        border: none;
     }
 
-    .close {
-        position: absolute;
-        top: 10px;
-        right: 10px;
-        cursor: pointer;
-        font-size: 20px;
+    .modal-body {
+        background: #f9fafb;
     }
 
     .drop-zone {
-        border: 2px dashed #ccc;
+        border: 2px dashed #6c757d;
+        border-radius: 10px;
         padding: 20px;
         text-align: center;
+        background: #f1f3f5;
         cursor: pointer;
-        margin-bottom: 20px;
+        transition: all 0.3s ease-in-out;
     }
+
+        .drop-zone:hover {
+            background: #e9ecef;
+            border-color: #007bff;
+        }
+
+        .drop-zone p {
+            margin: 0;
+            color: #495057;
+            font-size: 0.95rem;
+        }
+
+        .drop-zone a {
+            color: #007bff;
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+    .file-item {
+        display: flex;
+        align-items: center;
+        background: #f8f9fa;
+        padding: 10px;
+        border-radius: 8px;
+        margin-bottom: 8px;
+        box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .file-icon {
+        width: 40px;
+        height: 40px;
+        background: #ddd;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 20px;
+        margin-right: 10px;
+        color: #6c757d;
+    }
+
+    .file-name {
+        flex-grow: 1;
+        font-weight: 500;
+        color: #343a40;
+    }
+
+    .file-size {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+
+    .progress-bar {
+        height: 5px;
+        background: #007bff;
+        border-radius: 4px;
+    }
+
+    .delete-btn {
+        background: none;
+        border: none;
+        font-size: 18px;
+        color: #dc3545;
+        cursor: pointer;
+        transition: color 0.2s ease-in-out;
+    }
+
+        .delete-btn:hover {
+            color: #a71d2a;
+        }
+
 </style>
 <style>
     /* Styling for actions button */
@@ -296,17 +371,97 @@
 
 
 </style>
-
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-        let fileData = [
-            { name: "Buku.xlsx", date: "2024-01-01", size: "9.02 KB" },
-            { name: "Presentation.pptx", date: "2025-01-01", size: "12.8 KB" },
-            { name: "Project.zip", date: "2025-01-01", size: "45.5 MB" },
-            { name: "Project1.docx", date: "2025-01-11", size: "45.5 MB" },
-            { name: "Project2.zip", date: "2025-01-07", size: "41.5 MB" },
-            { name: "Project3.zip", date: "2025-01-04", size: "46.5 MB" },
-            { name: "Project4.zip", date: "2024-02-01", size: "43.5 MB" }
+        const dropZone = document.getElementById("dropZone");
+        const fileInput = document.getElementById("fileInput");
+        const fileList = document.getElementById("fileList");
+        const browseFiles = document.getElementById("browseFiles");
+
+        // Prevent default drag behaviors
+        ["dragenter", "dragover", "dragleave", "drop"].forEach(event => {
+            dropZone.addEventListener(event, e => e.preventDefault());
+        });
+
+        // Highlight drop zone on drag over
+        dropZone.addEventListener("dragover", () => {
+            dropZone.classList.add("border-primary");
+        });
+
+        // Remove highlight on drag leave
+        dropZone.addEventListener("dragleave", () => {
+            dropZone.classList.remove("border-primary");
+        });
+
+        // Handle file drop
+        dropZone.addEventListener("drop", (event) => {
+            dropZone.classList.remove("border-primary");
+            const files = event.dataTransfer.files;
+            handleFiles(files);
+        });
+
+        // Open file input on browse click
+        browseFiles.addEventListener("click", (e) => {
+            e.preventDefault();
+            fileInput.click();
+        });
+
+        // Handle file selection from input
+        fileInput.addEventListener("change", (event) => {
+            handleFiles(event.target.files);
+        });
+
+        // Function to process files and display them
+        function handleFiles(files) {
+            Array.from(files).forEach((file) => {
+                const listItem = document.createElement("li");
+                listItem.classList.add("file-item");
+
+                listItem.innerHTML = `
+                    <div class="file-icon">📄</div>
+                    <div class="file-info flex-grow-1">
+                        <div class="file-name fw-bold">${file.name}</div>
+                        <div class="file-size text-muted">${(file.size / 1024 / 1024).toFixed(2)} MB</div>
+                        <div class="progress mt-2">
+                            <div class="progress-bar bg-primary" style="width: 0%;"></div>
+                        </div>
+                    </div>
+                    <button class="delete-btn text-danger">&times;</button>
+                `;
+
+                // Simulate file upload progress
+                const progressBar = listItem.querySelector(".progress-bar");
+                let progress = 0;
+                const interval = setInterval(() => {
+                    progress += 10;
+                    progressBar.style.width = progress + "%";
+                    if (progress >= 100) clearInterval(interval);
+                }, 300);
+
+                // Hapus file dari daftar jika tombol delete diklik
+                listItem.querySelector(".delete-btn").addEventListener("click", function () {
+                    listItem.remove();
+                });
+
+                fileList.appendChild(listItem);
+            });
+        }
+    });
+</script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const fileData = [
+            { name: "OfficeMobile", date: "October 30, 2021", size: "0 items" },
+            { name: "Office Lens", date: "October 13, 2021", size: "0 items" },
+            { name: "Microsoft Copilot Chat Files", date: "Monday at 1:58...", size: "0 items" },
+            { name: "Lampiran", date: "February 25, 2024", size: "0 items" },
+            { name: "Aplikasi", date: "January 19, 2024", size: "0 items" },
+            { name: "SyncLogExcel.xlsx", date: "Yesterday at 1:...", size: "36.2 KB" },
+            { name: "Presentation.pptx", date: "November 7, 2023", size: "-" },
+            { name: "Doc1-1.docx", date: "April 21, 2024", size: "12.8 KB" },
+            { name: "Buku1.xlsx", date: "October 4, 2023", size: "7.81 KB" },
+            { name: "Buku.xlsx", date: "February 17, 2023", size: "9.02 KB" },
+            { name: "Buku 2.xlsx", date: "January 23, 2024", size: "11.2 KB" },
         ];
 
         function renderListView() {
@@ -315,37 +470,116 @@
                 <table class="table table-striped">
                     <thead>
                         <tr>
-                            <th>Name</th>
-                            <th>Modified Date</th>
-                            <th>Size</th>
+                            <th>
+                                <input type="text" id="filterName" class="form-control" placeholder="Filter Name">
+                            </th>
+                            <th>
+                                <input type="text" id="filterDate" class="form-control" placeholder="Filter Date">
+                            </th>
+                            <th>
+                                <input type="text" id="filterSize" class="form-control" placeholder="Filter Size">
+                            </th>
+                            <th></th>
+                        </tr>
+                        <tr>
+                            <th>
+                                Name
+                                <button class="btn btn-link dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-sort"></i>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="#" onclick="sortTable('name', 'asc')">A → Z</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="sortTable('name', 'desc')">Z → A</a></li>
+                                </ul>
+                            </th>
+                            <th>
+                                Modified Date
+                                <button class="btn btn-link dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-sort"></i>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="#" onclick="sortTable('date', 'asc')">Oldest → Newest</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="sortTable('date', 'desc')">Newest → Oldest</a></li>
+                                </ul>
+                            </th>
+                            <th>
+                                Size
+                                <button class="btn btn-link dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-sort"></i>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" href="#" onclick="sortTable('size', 'asc')">Small → Large</a></li>
+                                    <li><a class="dropdown-item" href="#" onclick="sortTable('size', 'desc')">Large → Small</a></li>
+                                </ul>
+                            </th>
                             <th>Actions</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        ${fileData.map(file => `
-                            <tr>
-                                <td>${file.name}</td>
-                                <td>${file.date}</td>
-                                <td>${file.size}</td>
-                                <td>
-                                    <button class="btn btn-link dropdown-toggle action-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                        <i class="fas fa-ellipsis-v"></i>
-                                    </button>
-                                    <ul class="dropdown-menu">
-                                        <li><a class="dropdown-item action-detail" href="#">Details</a></li>
-                                        <li><a class="dropdown-item action-share" href="#">Share</a></li>
-                                        <li><a class="dropdown-item action-copy" href="#">Copy</a></li>
-                                        <li><a class="dropdown-item action-move" href="#">Move</a></li>
-                                        <li><a class="dropdown-item action-download" href="#">Download</a></li>
-                                        <li><a class="dropdown-item action-rename" href="#">Rename</a></li>
-                                        <li><a class="dropdown-item action-delete" href="#">Delete</a></li>
-                                    </ul>
-                                </td>
-                            </tr>
-                        `).join('')}
+                    <tbody id="fileTableBody">
+                        ${fileData.map(file => renderRow(file)).join('')}
                     </tbody>
                 </table>
             `;
+
+            // Tambahkan event listener untuk filter
+            document.getElementById("filterName").addEventListener("input", filterTable);
+            document.getElementById("filterDate").addEventListener("input", filterTable);
+            document.getElementById("filterSize").addEventListener("input", filterTable);
+        }
+
+        function renderRow(file) {
+            return `
+                <tr>
+                    <td>${file.name}</td>
+                    <td>${file.date}</td>
+                    <td>${file.size}</td>
+                    <td>
+                        <button class="btn btn-link dropdown-toggle action-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-ellipsis-v"></i>
+                        </button>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item action-detail" href="#">Details</a></li>
+                            <li><a class="dropdown-item action-share" href="#">Share</a></li>
+                            <li><a class="dropdown-item action-copy" href="#">Copy</a></li>
+                            <li><a class="dropdown-item action-move" href="#">Move</a></li>
+                            <li><a class="dropdown-item action-download" href="#">Download</a></li>
+                            <li><a class="dropdown-item action-rename" href="#">Rename</a></li>
+                            <li><a class="dropdown-item action-delete" href="#">Delete</a></li>
+                        </ul>
+                    </td>
+                </tr>
+            `;
+        }
+
+        function filterTable() {
+            const nameFilter = document.getElementById("filterName").value.toLowerCase();
+            const dateFilter = document.getElementById("filterDate").value.toLowerCase();
+            const sizeFilter = document.getElementById("filterSize").value.toLowerCase();
+
+            const filteredData = fileData.filter(file =>
+                file.name.toLowerCase().includes(nameFilter) &&
+                file.date.toLowerCase().includes(dateFilter) &&
+                file.size.toLowerCase().includes(sizeFilter)
+            );
+
+            document.getElementById("fileTableBody").innerHTML = filteredData.map(file => renderRow(file)).join('');
+        }
+
+        function sortTable(column, order) {
+            fileData.sort((a, b) => {
+                let valA = a[column].toLowerCase();
+                let valB = b[column].toLowerCase();
+
+                if (column === 'size') {
+                    valA = parseFloat(a.size) || 0;
+                    valB = parseFloat(b.size) || 0;
+                }
+
+                if (order === 'asc') return valA > valB ? 1 : -1;
+                return valA < valB ? 1 : -1;
+            });
+
+            document.getElementById("fileTableBody").innerHTML = fileData.map(file => renderRow(file)).join('');
         }
 
         function renderTilesView() {
