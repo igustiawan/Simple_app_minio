@@ -70,10 +70,10 @@
                         </ul>
 
                         <!-- Modal Footer -->
-                        <div class="d-flex justify-content-end mt-3 border-top pt-3">
+                @*         <div class="d-flex justify-content-end mt-3 border-top pt-3">
                             <button class="btn btn-link text-secondary" data-bs-dismiss="modal">Cancel</button>
                             <button class="btn btn-primary ms-2">Add Files</button>
-                        </div>
+                        </div> *@
                     </div>
                 </div>
             </div>
@@ -371,6 +371,7 @@
 
 
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/5.0.11/signalr.min.js"></script>
 <script>
     document.addEventListener("DOMContentLoaded", function () {
         const dropZone = document.getElementById("dropZone");
@@ -378,45 +379,40 @@
         const fileList = document.getElementById("fileList");
         const browseFiles = document.getElementById("browseFiles");
 
+        // ✅ SignalR Connection
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/uploadHub")
+            .withAutomaticReconnect()
+            .build();
+
+        connection.start().catch(err => console.error(err));
+
         // Prevent default drag behaviors
         ["dragenter", "dragover", "dragleave", "drop"].forEach(event => {
             dropZone.addEventListener(event, e => e.preventDefault());
         });
 
-        // Highlight drop zone on drag over
-        dropZone.addEventListener("dragover", () => {
-            dropZone.classList.add("border-primary");
-        });
+        dropZone.addEventListener("dragover", () => dropZone.classList.add("border-primary"));
+        dropZone.addEventListener("dragleave", () => dropZone.classList.remove("border-primary"));
 
-        // Remove highlight on drag leave
-        dropZone.addEventListener("dragleave", () => {
-            dropZone.classList.remove("border-primary");
-        });
-
-        // Handle file drop
         dropZone.addEventListener("drop", (event) => {
             dropZone.classList.remove("border-primary");
-            const files = event.dataTransfer.files;
-            handleFiles(files);
+            handleFiles(event.dataTransfer.files);
         });
 
-        // Open file input on browse click
         browseFiles.addEventListener("click", (e) => {
             e.preventDefault();
             fileInput.click();
         });
 
-        // Handle file selection from input
         fileInput.addEventListener("change", (event) => {
             handleFiles(event.target.files);
         });
 
-        // Function to process files and display them
         function handleFiles(files) {
-            Array.from(files).forEach((file) => {
+            Array.from(files).forEach(async (file) => {
                 const listItem = document.createElement("li");
                 listItem.classList.add("file-item");
-
                 listItem.innerHTML = `
                     <div class="file-icon">📄</div>
                     <div class="file-info flex-grow-1">
@@ -426,43 +422,99 @@
                             <div class="progress-bar bg-primary" style="width: 0%;"></div>
                         </div>
                     </div>
-                    <button class="delete-btn text-danger">&times;</button>
                 `;
 
-                // Simulate file upload progress
                 const progressBar = listItem.querySelector(".progress-bar");
-                let progress = 0;
-                const interval = setInterval(() => {
-                    progress += 10;
-                    progressBar.style.width = progress + "%";
-                    if (progress >= 100) clearInterval(interval);
-                }, 300);
-
-                // Hapus file dari daftar jika tombol delete diklik
-                listItem.querySelector(".delete-btn").addEventListener("click", function () {
-                    listItem.remove();
-                });
-
                 fileList.appendChild(listItem);
+
+                let uploadId = null;
+
+                try {
+                    const startResponse = await fetch("/Upload/StartUpload");
+                    if (!startResponse.ok) throw new Error("Gagal mendapatkan uploadId");
+                    const startResult = await startResponse.json();
+                    uploadId = startResult.uploadId;
+
+                    const formData = new FormData();
+                    formData.append("file", file);
+
+                    const xhr = new XMLHttpRequest();
+                    xhr.open("POST", `/Upload/Upload?uploadId=${uploadId}`, true);
+
+                    xhr.upload.onprogress = function (event) {
+                        if (event.lengthComputable) {
+                            let progress = Math.round((event.loaded / event.total) * 100);
+                            progressBar.style.width = `${progress}%`;
+                        }
+                    };
+
+                    xhr.onload = function () {
+                        if (xhr.status === 200) {
+                            progressBar.classList.add("bg-success");
+                        } else {
+                            progressBar.classList.add("bg-danger");
+                        }
+                    };
+
+                    xhr.onerror = function () {
+                        progressBar.classList.add("bg-danger");
+                    };
+
+                    xhr.send(formData);
+                } catch (error) {
+                    progressBar.classList.add("bg-danger");
+                    console.error(`Error: ${error.message}`);
+                }
             });
         }
+
+        connection.on("ReceiveUploadProgress", (uploadId, progress) => {
+            console.log(`Progress: ${progress}%`);
+            const progressBars = document.querySelectorAll(".progress-bar");
+            progressBars.forEach(progressBar => {
+                if (progressBar.style.width !== "100%") {
+                    progressBar.style.width = `${progress}%`;
+                }
+            });
+        });
     });
+
+
 </script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-        const fileData = [
-            { name: "OfficeMobile", date: "October 30, 2021", size: "0 items" },
-            { name: "Office Lens", date: "October 13, 2021", size: "0 items" },
-            { name: "Microsoft Copilot Chat Files", date: "Monday at 1:58...", size: "0 items" },
-            { name: "Lampiran", date: "February 25, 2024", size: "0 items" },
-            { name: "Aplikasi", date: "January 19, 2024", size: "0 items" },
-            { name: "SyncLogExcel.xlsx", date: "Yesterday at 1:...", size: "36.2 KB" },
-            { name: "Presentation.pptx", date: "November 7, 2023", size: "-" },
-            { name: "Doc1-1.docx", date: "April 21, 2024", size: "12.8 KB" },
-            { name: "Buku1.xlsx", date: "October 4, 2023", size: "7.81 KB" },
-            { name: "Buku.xlsx", date: "February 17, 2023", size: "9.02 KB" },
-            { name: "Buku 2.xlsx", date: "January 23, 2024", size: "11.2 KB" },
-        ];
+        // const fileData = [
+        //     { name: "OfficeMobile", date: "October 30, 2021", size: "0 items" },
+        //     { name: "Office Lens", date: "October 13, 2021", size: "0 items" },
+        //     { name: "Microsoft Copilot Chat Files", date: "Monday at 1:58...", size: "0 items" },
+        //     { name: "Lampiran", date: "February 25, 2024", size: "0 items" },
+        //     { name: "Aplikasi", date: "January 19, 2024", size: "0 items" },
+        //     { name: "SyncLogExcel.xlsx", date: "Yesterday at 1:...", size: "36.2 KB" },
+        //     { name: "Presentation.pptx", date: "November 7, 2023", size: "-" },
+        //     { name: "Doc1-1.docx", date: "April 21, 2024", size: "12.8 KB" },
+        //     { name: "Buku1.xlsx", date: "October 4, 2023", size: "7.81 KB" },
+        //     { name: "Buku.xlsx", date: "February 17, 2023", size: "9.02 KB" },
+        //     { name: "Buku 2.xlsx", date: "January 23, 2024", size: "11.2 KB" },
+        // ];
+
+        let fileData = [];
+
+        $.ajax({
+            url: "/MyFiles/GetFileList", // Ganti ControllerName dengan nama controller yang sesuai
+            type: "GET",
+            dataType: "json",
+            success: function (data) {
+                fileData = data; // Simpan data di variabel global
+                renderListView();
+                console.log("File data loaded:", fileData);
+            },
+            error: function (xhr) {
+                console.error("Failed to fetch file list:", xhr.responseText);
+            }
+        });
+      
 
         function renderListView() {
             let container = document.getElementById("fileContainer");
@@ -530,8 +582,8 @@
         function renderRow(file) {
             return `
                 <tr>
-                    <td>${file.name}</td>
-                    <td>${file.date}</td>
+                    <td>${file.fileName}</td>
+                    <td>${file.lastModified}</td>
                     <td>${file.size}</td>
                     <td>
                         <button class="btn btn-link dropdown-toggle action-btn" type="button" data-bs-toggle="dropdown" aria-expanded="false">
@@ -544,12 +596,79 @@
                             <li><a class="dropdown-item action-move" href="#">Move</a></li>
                             <li><a class="dropdown-item action-download" href="#">Download</a></li>
                             <li><a class="dropdown-item action-rename" href="#">Rename</a></li>
-                            <li><a class="dropdown-item action-delete" href="#">Delete</a></li>
+                            <li><a class="dropdown-item action-delete" href="#" data-filename="${file.fileName}">Delete</a></li>
                         </ul>
                     </td>
                 </tr>
             `;
         }
+
+        document.addEventListener("click", async function (event) {
+            if (event.target.classList.contains("action-delete")) {
+                event.preventDefault();
+
+                // Dapatkan baris terkait
+                let row = event.target.closest("tr");
+                let fileName = row.querySelector("td:first-child").innerText;
+
+                if (!confirm(`Apakah Anda yakin ingin menghapus ${fileName}?`)) return;
+
+                try {
+                    const response = await fetch(`/Upload/DeleteFile?fileName=${encodeURIComponent(fileName)}`, {
+                        method: 'DELETE'
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`Gagal menghapus file: ${response.statusText}`);
+                    }
+
+                    alert(`File "${fileName}" berhasil dihapus.`);
+                    row.remove(); // Hapus baris dari tabel tanpa perlu refresh seluruh halaman
+                } catch (error) {
+                    console.error("Error:", error);
+                    alert("Terjadi kesalahan saat menghapus file.");
+                }
+            } else if (event.target.classList.contains("action-download")) {
+                event.preventDefault();
+
+                let button = event.target;
+                let row = button.closest("tr");
+                let fileName = row.querySelector("td:first-child").innerText;
+
+                if (!fileName) return;
+
+                button.disabled = true; // Nonaktifkan tombol saat download
+                button.innerHTML = '<span class="spinner-border spinner-border-sm"></span> Downloading...';
+
+                try {
+                    const encodedFileName = encodeURIComponent(fileName);
+                    const url = `/Upload/DownloadFile?fileName=${encodedFileName}`;
+
+                    const response = await fetch(url);
+                    if (!response.ok) throw new Error("Gagal mengunduh file.");
+
+                    const blob = await response.blob();
+                    const objectUrl = URL.createObjectURL(blob);
+
+                    // Buat elemen <a> untuk memicu download
+                    const a = document.createElement("a");
+                    a.href = objectUrl;
+                    a.download = fileName;
+                    document.body.appendChild(a);
+                    a.click();
+
+                    URL.revokeObjectURL(objectUrl);
+                    document.body.removeChild(a);
+                } catch (error) {
+                    console.error("Error:", error);
+                    alert("Terjadi kesalahan saat mengunduh file.");
+                } finally {
+                    button.innerHTML = "Download";
+                    button.disabled = false;
+                }
+            }
+        });
+
 
         function filterTable() {
             const nameFilter = document.getElementById("filterName").value.toLowerCase();
@@ -585,18 +704,18 @@
         function renderTilesView() {
             let container = document.getElementById("fileContainer");
             container.innerHTML = `
-        <div class="tiles-view">
-            ${fileData.map(file => `
-                <div class="tile-item">
-                    ${getFileIcon(file.name)}
-                    <div class="tile-name">${file.name}</div>
-                    <div class="tile-info">${file.date} - ${file.size}</div>
-                    <input type="checkbox" id="${sanitizeId(file.name)}" class="file-checkbox" name="${file.name}">
-                    <label for="${sanitizeId(file.name)}"></label>
+                <div class="tiles-view">
+                    ${fileData.map(file => `
+                        <div class="tile-item">
+                                ${getFileIcon(file.fileName)}
+                                <div class="tile-name">${file.fileName}</div>
+                                <div class="tile-info">${file.lastModified} - ${file.size}</div>
+                                <input type="checkbox" id="${sanitizeId(file.fileName)}" class="file-checkbox" name="${file.name}">
+                                <label for="${sanitizeId(file.fileName)}"></label>
+                        </div>
+                    `).join('')}
                 </div>
-            `).join('')}
-        </div>
-        `;
+                `;
 
             document.querySelectorAll('.file-checkbox').forEach(checkbox => {
                 checkbox.addEventListener('change', handleCheckboxChange);
